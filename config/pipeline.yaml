@@ -1,0 +1,19 @@
+# Everything a run depends on. Changing a value changes the config hash saved with each model.
+data:
+  # OpenML dataset 1597 (creditcard), version 1, as Parquet.
+  url: https://data.openml.org/datasets/0000/1597/dataset_1597.pq
+  # Recorded on first download (18 Nov 2026). A different file fails the check instead of
+  # silently changing every result.
+  sha256: "b7efcb35a428bbe22347a05d2437d9177bab07ce61e51214a17bec584ad9496d"  # quoted: YAML reads an all-digit hash as a number
+  max_bytes: 104857600  # 100 MB; the file is 73 MB
+  timeout_seconds: 120
+
+split:
+  train: 0.70
+  validation: 0.15
+  test: 0.15
+
+costs:
+  review_eur: 5.0  # what one false alarm costs; a missed fraud costs its amount
+
+seed: 0
