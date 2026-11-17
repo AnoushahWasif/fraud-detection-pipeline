@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from fraud_pipeline import threshold
+from fraud_pipeline.evaluate import expected_cost
 
 
 def test_the_cheapest_threshold_is_chosen():
@@ -28,8 +30,15 @@ def test_small_frauds_are_not_worth_a_review():
     assert best["alerts_per_1000"] == 0  # reviewing costs more than the frauds
 
 
-def test_candidate_thresholds_are_capped():
-    scores = np.random.default_rng(0).uniform(size=50_000)
-    cuts = threshold.candidate_thresholds(scores)
-    assert len(cuts) <= 2002 and cuts.min() == scores.min() and cuts[-2] == scores.max()
-    assert cuts[-1] == np.inf
+def test_the_sweep_matches_the_direct_cost_at_every_cut():
+    rng = np.random.default_rng(0)
+    y = (rng.uniform(size=3000) < 0.01).astype(int)
+    scores = np.round(rng.uniform(size=3000), 3)  # rounded, so there are ties
+    amount = rng.gamma(2, 40, 3000)
+    table = threshold.sweep(y, scores, amount, review_eur=5)
+    for _, row in table.sample(40, random_state=1).iterrows():
+        direct = expected_cost(y, scores, amount, row["threshold"], 5)
+        assert row["cost_per_1000"] == pytest.approx(direct["cost_per_1000"])
+        assert row["frauds_caught"] == direct["frauds_caught"]
+    assert table["threshold"].iloc[-1] == np.inf
+    assert len(table) == len(np.unique(scores)) + 1
