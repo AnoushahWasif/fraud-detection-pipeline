@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from fraud_pipeline import compare, ingest, split, train
+from fraud_pipeline import compare, ingest, split, tracking, train
 from fraud_pipeline import config as config_module
 from fraud_pipeline.evaluate import expected_cost, summary
 from fraud_pipeline.model_store import save_model
@@ -89,6 +89,9 @@ def main(out_dir: Path = Path("models/fraud"), report: Path = Path("reports/thre
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(json.dumps(meta, indent=2))
     table.to_csv(report.with_suffix(".csv"), index=False)
+    params = {"model": CHOSEN, "threshold": meta["threshold"], "review_eur": cfg.costs.review_eur}
+    tags = tracking.tags_from(meta) | {"stage": "final", "model_sha256": meta["model_sha256"]}
+    tracking.log_run("final model", params, meta["validation"], tags, artifact=report)
     return meta
 
 

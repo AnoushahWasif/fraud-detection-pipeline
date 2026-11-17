@@ -20,7 +20,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.preprocessing import StandardScaler
 
 from fraud_pipeline import config as config_module
-from fraud_pipeline import ingest, split
+from fraud_pipeline import ingest, split, tracking, train
 from fraud_pipeline.evaluate import summary
 from fraud_pipeline.schema import FEATURES, TARGET
 
@@ -93,6 +93,10 @@ def main(out: Path = Path("reports/compare.json")) -> dict:
     report = {"config_sha256": config_sha, "folds": FOLDS, "results": results}
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2))
+    tags = tracking.tags_from(train.metadata(cfg, config_sha, {}))
+    for name, result in results.items():
+        params = {"candidate": name, "folds": FOLDS, "seed": cfg.seed}
+        tracking.log_run(f"compare: {name}", params, result, tags | {"stage": "compare"})
     return report
 
 
