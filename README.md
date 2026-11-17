@@ -4,7 +4,7 @@ Flagging fraudulent card transactions with a small pipeline built the way a team
 
 The model is the less interesting part. The point is that every number can be traced to the data, code and config that produced it, and that the alert threshold is set by what mistakes cost, not by 0.5.
 
-**Status:** in progress (day 7 of 12). Results will go here once there are any.
+**Status:** in progress (day 8 of 12). Results will go here once there are any.
 
 ## Planned approach
 
@@ -26,7 +26,7 @@ Python 3.12, uv, pandas, scikit-learn, matplotlib, pytest, ruff. CI: GitHub Acti
 ## Quick start
 
 ```bash
-uv sync
+uv sync --extra tracking   # without the extra, runs work but are not logged to MLflow
 make data    # downloads the pinned 73 MB Parquet once, checks its SHA-256 and the schema
 make lint test
 ```
