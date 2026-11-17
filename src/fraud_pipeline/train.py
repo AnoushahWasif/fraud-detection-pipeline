@@ -72,6 +72,7 @@ def metadata(cfg, config_sha: str, extra: dict) -> dict:
 def main(out_dir: Path = Path("models/baseline"), report: Path = Path("reports/baseline.json")):
     cfg, config_sha = config_module.load()
     splits = split.by_time(ingest.load(cfg), cfg.split)
+    split.check_no_leakage(splits, FEATURES)
     model = fit(baseline(cfg.seed), splits.train)
     val = summary(splits.validation[TARGET], scores(model, splits.validation))
     meta = metadata(
