@@ -41,9 +41,9 @@ The task is to flag fraudulent card transactions. The questions it answers:
 
 | Component | Responsibility |
 |---|---|
-| `config/*.yaml` | Data source, split fractions, costs, model settings. Validated with Pydantic, unknown keys refused |
+| `config/*.yaml` | Data source, split fractions, costs, model settings. Validated with Pydantic, unknown keys refused, the hash quoted (YAML reads an all-digit string as a number). The file's SHA-256 is saved with every model |
 | `ingest.py` | Pinned download, hash check, Parquet cache |
-| `schema.py` | Pandera schema: column types, `Amount ≥ 0`, `Class ∈ {0, 1}`, no missing values. A failing batch stops the pipeline |
+| `schema.py` | Pandera schema: exactly the 31 expected columns in order, all numeric with no missing values, `Time` within two days, `Amount ≥ 0`, PCA components within ±1,000, `Class ∈ {0, 1}`, at least one row. A failing table stops the pipeline |
 | `split.py` | Time-ordered split, duplicate report |
 | `train.py` | CV with resampling inside folds, model metadata (data hash, git commit, config hash) saved next to each model |
 | `threshold.py` | Cost-based threshold chosen on validation |
