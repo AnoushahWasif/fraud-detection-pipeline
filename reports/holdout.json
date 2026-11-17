@@ -1,0 +1,64 @@
+{
+  "split": "test",
+  "transactions": 42721,
+  "frauds": 52,
+  "model_sha256": "7a2ce68df21044c29a66ed0abcaa2415f58577936d5952a04d94bbec31c749a0",
+  "threshold": 0.8125609434496658,
+  "pr_auc": 0.7297,
+  "recall_at_1_per_1000": 0.7115,
+  "at_threshold": {
+    "cost_per_1000": 63.32,
+    "missed_eur_per_1000": 57.82,
+    "review_eur_per_1000": 5.5,
+    "alerts_per_1000": 1.1,
+    "frauds_caught": 37.0,
+    "frauds": 52.0
+  },
+  "flag_nothing": {
+    "cost_per_1000": 144.4,
+    "missed_eur_per_1000": 144.4,
+    "review_eur_per_1000": 0.0,
+    "alerts_per_1000": 0.0,
+    "frauds_caught": 0.0,
+    "frauds": 52.0
+  },
+  "intervals_95": {
+    "pr_auc": [
+      0.6049,
+      0.8379
+    ],
+    "recall_at_1_per_1000": [
+      0.5745,
+      0.8043
+    ],
+    "cost_per_1000": [
+      14.8712,
+      134.6793
+    ]
+  },
+  "missed_fraud_amounts": [
+    0.0,
+    1.0,
+    2.47,
+    3.14,
+    7.06,
+    7.59,
+    12.31,
+    19.95,
+    39.9,
+    42.53,
+    57.73,
+    187.11,
+    357.95,
+    634.3,
+    1096.99
+  ],
+  "run": {
+    "git": {
+      "commit": "0817e4a4a3a0be80366b6640256b2ff8585330ff",
+      "dirty": false
+    },
+    "config_sha256": "2124ae913de4b3308d22a55c756aa612224a17035290b797e47e2b24f8fa375b",
+    "data_sha256": "b7efcb35a428bbe22347a05d2437d9177bab07ce61e51214a17bec584ad9496d"
+  }
+}
