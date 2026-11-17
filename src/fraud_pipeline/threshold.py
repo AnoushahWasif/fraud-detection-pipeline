@@ -22,21 +22,34 @@ from fraud_pipeline.schema import FEATURES, TARGET
 CHOSEN = "boosting, class weights"
 
 
-def candidate_thresholds(scores: np.ndarray) -> np.ndarray:
-    """Every distinct score is a possible cut (at most 2,000, spread by quantile), plus infinity:
-    flagging nothing has to be an option, since reviews can cost more than the frauds."""
-    unique = np.unique(scores)
-    if len(unique) > 2000:
-        unique = np.unique(np.quantile(scores, np.linspace(0, 1, 2001)))
-    return np.append(unique, np.inf)
-
-
 def sweep(y, scores, amount, review_eur: float) -> pd.DataFrame:
-    rows = [
-        {"threshold": t, **expected_cost(y, scores, amount, t, review_eur)}
-        for t in candidate_thresholds(scores)
-    ]
-    return pd.DataFrame(rows)
+    """Expected cost per 1,000 transactions at every distinct score as the cut (flag score >= cut),
+    plus infinity, since flagging nothing has to be an option when reviews cost more than the
+    frauds. One sort and running totals, so every score is tried, not a sample of them: the
+    decision happens in the top fraction of a percent, where a sample has few points."""
+    y = np.asarray(y, int)
+    scores, amount = np.asarray(scores, float), np.asarray(amount, float)
+    order = np.argsort(-scores, kind="stable")
+    s, fraud_eur, is_fraud = scores[order], (amount * y)[order], y[order]
+    # Last position of each distinct score, so ties are flagged together.
+    ends = np.flatnonzero(np.r_[s[1:] != s[:-1], True])
+    flagged = ends + 1
+    caught_eur = np.cumsum(fraud_eur)[ends]
+    caught = np.cumsum(is_fraud)[ends]
+    per = 1000 / len(y)
+    total_eur, frauds = fraud_eur.sum(), int(y.sum())
+    table = pd.DataFrame(
+        {
+            "threshold": np.r_[s[ends], np.inf],
+            "missed_eur_per_1000": np.r_[total_eur - caught_eur, total_eur] * per,
+            "review_eur_per_1000": np.r_[flagged * review_eur, 0.0] * per,
+            "alerts_per_1000": np.r_[flagged, 0] * per,
+            "frauds_caught": np.r_[caught, 0],
+            "frauds": frauds,
+        }
+    )
+    table["cost_per_1000"] = table["missed_eur_per_1000"] + table["review_eur_per_1000"]
+    return table.sort_values("threshold").reset_index(drop=True)
 
 
 def choose(table: pd.DataFrame) -> pd.Series:
