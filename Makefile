@@ -1,4 +1,4 @@
-.PHONY: install lint format test data
+.PHONY: install lint format test data train
 
 install:
 	uv sync
@@ -16,3 +16,6 @@ test:
 
 data:
 	uv run python -m fraud_pipeline.ingest
+
+train:
+	uv run python -m fraud_pipeline.train
