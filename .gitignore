@@ -23,3 +23,4 @@ data/
 
 # MLflow tracking (local file store)
 mlruns/
+mlflow.db
