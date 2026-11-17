@@ -2,7 +2,7 @@
   "data_sha256": "b7efcb35a428bbe22347a05d2437d9177bab07ce61e51214a17bec584ad9496d",
   "config_sha256": "2124ae913de4b3308d22a55c756aa612224a17035290b797e47e2b24f8fa375b",
   "git": {
-    "commit": "4f56dba11263cb92cfb0bfdc22764cc0f347f5fc",
+    "commit": "bdccf8ad39f15b5e493426d66c2ee7a29dc9b497",
     "dirty": false
   },
   "python": "3.12.13",
