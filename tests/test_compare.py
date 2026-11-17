@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 from conftest import transactions
 from imblearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -25,6 +26,7 @@ class SpySampler:
         return self
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_resampling_only_sees_training_fold_rows():
     t = transactions(1500, frauds=60)
     t["V1"] = np.arange(len(t), dtype=float)  # a unique id per row, unscaled below
