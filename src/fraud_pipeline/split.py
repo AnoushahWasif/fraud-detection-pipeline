@@ -53,3 +53,19 @@ def report(splits: Splits) -> dict:
     shared = len(keys["train"] & keys["validation"]) + len(keys["train"] & keys["test"])
     shared += len(keys["validation"] & keys["test"])
     return {"splits": rows, "rows_shared_across_splits": shared}
+
+
+class LeakageError(RuntimeError):
+    pass
+
+
+def check_no_leakage(splits: Splits, features: list[str]) -> None:
+    """Called before every training run. Raises instead of letting a leak through quietly."""
+    if TARGET in features:
+        raise LeakageError("the label is listed as a feature")
+    order = [part["Time"] for _, part in splits.items()]
+    for earlier, later in zip(order, order[1:], strict=False):
+        if earlier.max() >= later.min():
+            raise LeakageError("splits overlap in time")
+    if report(splits)["rows_shared_across_splits"]:
+        raise LeakageError("the same transaction appears in more than one split")
