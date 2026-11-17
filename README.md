@@ -4,7 +4,7 @@ Flagging fraudulent card transactions with a small pipeline built the way a team
 
 The model is the less interesting part. The point is that every number can be traced to the data, code and config that produced it, and that the alert threshold is set by what mistakes cost, not by 0.5.
 
-**Status:** in progress (day 5 of 12). Results will go here once there are any.
+**Status:** in progress (day 6 of 12). Results will go here once there are any.
 
 ## Planned approach
 
