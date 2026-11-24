@@ -1,0 +1,11 @@
+.venv
+data
+mlflow.db
+mlruns
+notebooks
+reports
+tests
+.git
+.github
+*.part
+.env
