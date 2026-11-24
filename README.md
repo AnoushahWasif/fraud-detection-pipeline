@@ -114,7 +114,7 @@ src/fraud_pipeline/      config, ingest, schema, split, evaluate, train, compare
 notebooks/               01 EDA · 02 class weights vs resampling · 03 threshold
 scripts/smoke.py         the CI smoke check against a running service
 reports/                 JSON results with hashes, figures
-tests/                   100 tests: leakage, bad config, bad data, bad requests, refusals
+tests/                   104 tests: leakage, bad config, bad data, bad downloads, bad requests, refusals
 ```
 
 ## Limitations
