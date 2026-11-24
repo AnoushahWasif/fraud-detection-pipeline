@@ -1,0 +1,50 @@
+{
+  "data_sha256": "b7efcb35a428bbe22347a05d2437d9177bab07ce61e51214a17bec584ad9496d",
+  "config_sha256": "2124ae913de4b3308d22a55c756aa612224a17035290b797e47e2b24f8fa375b",
+  "git": {
+    "commit": "3de226797c9ef7633cbb63af84178bbec30f4303",
+    "dirty": false
+  },
+  "python": "3.12.13",
+  "sklearn": "1.9.1",
+  "pandas": "3.1.1",
+  "seed": 0,
+  "features": [
+    "Time",
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6",
+    "V7",
+    "V8",
+    "V9",
+    "V10",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18",
+    "V19",
+    "V20",
+    "V21",
+    "V22",
+    "V23",
+    "V24",
+    "V25",
+    "V26",
+    "V27",
+    "V28",
+    "Amount"
+  ],
+  "model": "logistic regression, class_weight=balanced",
+  "validation": {
+    "pr_auc": 0.8393549906625348,
+    "recall_at_1_per_1000": 0.7142857142857143
+  },
+  "model_sha256": "1c78f7b287bac956b206328c97705dbcc35905b5624af49deb43bfabe1482b53"
+}
