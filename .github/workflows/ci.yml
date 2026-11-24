@@ -26,7 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
-      - run: uv export --format requirements-txt --no-dev --no-emit-project > requirements.txt
+      # Includes the MLflow extra: it isn't in the image, but it runs on developer machines.
+      - run: uv export --format requirements-txt --no-dev --extra tracking --no-emit-project > requirements.txt
       - run: uvx pip-audit -r requirements.txt --no-deps --disable-pip
 
   secrets:
@@ -39,3 +40,42 @@ jobs:
         env:
           # Required to scan pull requests; read-only under this workflow's permissions.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # The real pipeline on the real (pinned, hash-checked) data, then the image built from it,
+  # run, scored through, and scanned. The 5-minute model comparison is skipped.
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      FRAUD_MLFLOW: "off"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --frozen
+      # OpenML is slow and sometimes sends broken copies to CI runners. A cached file is
+      # hash-checked by ingest like a fresh one, so a bad cache entry can't slip through.
+      - uses: actions/cache@v6
+        with:
+          path: data/raw
+          key: openml-1597-${{ hashFiles('config/pipeline.yaml') }}
+      - name: Download and validate the data
+        run: uv run python -m fraud_pipeline.ingest
+      - name: Train the baseline and the thresholded model
+        run: |
+          uv run python -m fraud_pipeline.train
+          uv run python -m fraud_pipeline.threshold
+      - name: Build the image
+        run: docker build -t fraud-scoring:ci .
+      - name: Run it and score real transactions through it
+        run: |
+          export FRAUD_API_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          docker run -d --name api -p 127.0.0.1:8000:8000 -e FRAUD_API_KEY fraud-scoring:ci
+          uv run python scripts/smoke.py http://127.0.0.1:8000
+      # Exact version: a scanner sees the whole image, so a moved tag would be a supply-chain risk.
+      - name: Scan the image with Trivy
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.1
+          image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress fraud-scoring:ci
+      - name: Container logs
+        if: failure()
+        run: docker logs api || true
