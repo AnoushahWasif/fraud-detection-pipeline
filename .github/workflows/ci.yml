@@ -52,6 +52,12 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --frozen
+      # OpenML is slow and sometimes sends broken copies to CI runners. A cached file is
+      # hash-checked by ingest like a fresh one, so a bad cache entry can't slip through.
+      - uses: actions/cache@v6
+        with:
+          path: data/raw
+          key: openml-1597-${{ hashFiles('config/pipeline.yaml') }}
       - name: Download and validate the data
         run: uv run python -m fraud_pipeline.ingest
       - name: Train the baseline and the thresholded model

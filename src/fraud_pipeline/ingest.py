@@ -5,7 +5,9 @@ uv run python -m fraud_pipeline.ingest
 
 import hashlib
 import hmac
+import http.client
 import os
+import time
 import urllib.request
 from pathlib import Path
 
@@ -15,10 +17,15 @@ from fraud_pipeline import config as config_module
 from fraud_pipeline.schema import TARGET, validate
 
 CHUNK = 1 << 20
+ATTEMPTS = 3
 
 
 class IngestError(RuntimeError):
     pass
+
+
+class _BadDownload(IngestError):
+    """Worth another try: the connection broke or the bytes came out wrong."""
 
 
 def data_dir() -> Path:
@@ -37,11 +44,39 @@ def sha256_of(path: Path) -> str:
     return digest.hexdigest()
 
 
-def fetch(cfg: config_module.Config, dest: Path, opener=urllib.request.urlopen) -> Path:
-    """Download to a .part file, refusing more than max_bytes, then keep it only if its hash
-    matches the config."""
+def fetch(
+    cfg: config_module.Config,
+    dest: Path,
+    opener=urllib.request.urlopen,
+    attempts: int = ATTEMPTS,
+    wait=None,
+) -> Path:
+    """Download to a .part file, refusing more than max_bytes, and keep it only if its hash
+    matches the config.
+
+    A broken connection or a wrong hash is retried a few times: CI runners have received
+    truncated or corrupted copies of this file. A file over the size cap is never retried.
+    """
+    wait = wait or time.sleep
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
+    for attempt in range(1, attempts + 1):
+        try:
+            _download_once(cfg, tmp, opener)
+        except _BadDownload:
+            tmp.unlink(missing_ok=True)
+            if attempt == attempts:
+                raise
+            wait(5 * attempt)
+            continue
+        except IngestError:
+            tmp.unlink(missing_ok=True)
+            raise
+        tmp.replace(dest)
+        return dest
+
+
+def _download_once(cfg: config_module.Config, tmp: Path, opener) -> None:
     size = 0
     try:
         with (
@@ -53,18 +88,14 @@ def fetch(cfg: config_module.Config, dest: Path, opener=urllib.request.urlopen) 
                 if size > cfg.data.max_bytes:
                     raise IngestError(f"download passed the {cfg.data.max_bytes:,}-byte cap")
                 out.write(block)
-    except OSError as exc:
-        tmp.unlink(missing_ok=True)
-        raise IngestError(f"download failed: {exc}") from exc
-    except IngestError:
-        tmp.unlink(missing_ok=True)
-        raise
+    except (OSError, http.client.HTTPException) as exc:
+        raise _BadDownload(f"download failed: {exc!r}") from exc
     actual = sha256_of(tmp)
     if not hmac.compare_digest(actual, cfg.data.sha256):
-        tmp.unlink(missing_ok=True)
-        raise IngestError(f"downloaded file has SHA-256 {actual}, config expects {cfg.data.sha256}")
-    tmp.replace(dest)
-    return dest
+        raise _BadDownload(
+            f"downloaded file ({size:,} bytes) has SHA-256 {actual}, "
+            f"config expects {cfg.data.sha256}"
+        )
 
 
 def load(cfg: config_module.Config, path: Path | None = None) -> pd.DataFrame:

@@ -1,3 +1,4 @@
+import http.client
 import io
 
 import pandas as pd
@@ -17,6 +18,28 @@ class Response(io.BytesIO):
 
 def serve(data):
     return lambda url, timeout: Response(data)
+
+
+def serve_in_turn(*replies):
+    """Each call gets the next reply: bytes to serve, or an exception to raise."""
+    calls = []
+
+    def opener(url, timeout):
+        reply = replies[len(calls)]
+        calls.append(url)
+        if isinstance(reply, Exception):
+            raise reply
+        return Response(reply)
+
+    opener.calls = calls
+    return opener
+
+
+@pytest.fixture(autouse=True)
+def no_waiting(monkeypatch):
+    waits = []
+    monkeypatch.setattr(ingest.time, "sleep", waits.append)
+    return waits
 
 
 def cfg_for(tmp_path, config_text, data, **overrides):
@@ -78,3 +101,37 @@ def test_a_categorical_string_label_like_openmls_is_handled(tmp_path, config_tex
     path.write_bytes(data)
     out = ingest.load(cfg, path)
     assert out["Class"].dtype.kind == "i" and out["Class"].sum() == table["Class"].sum()
+
+
+def test_a_corrupted_copy_is_retried(tmp_path, config_text, table, no_waiting):
+    data = parquet_bytes(table)
+    cfg = cfg_for(tmp_path, config_text, data)
+    opener = serve_in_turn(data[:-100], data)
+    assert ingest.fetch(cfg, tmp_path / "d.pq", opener=opener).read_bytes() == data
+    assert len(opener.calls) == 2 and no_waiting == [5]
+
+
+def test_a_broken_connection_is_retried(tmp_path, config_text, table, no_waiting):
+    data = parquet_bytes(table)
+    cfg = cfg_for(tmp_path, config_text, data)
+    opener = serve_in_turn(http.client.IncompleteRead(b"x", 10), TimeoutError(), data)
+    assert ingest.fetch(cfg, tmp_path / "d.pq", opener=opener).exists()
+    assert no_waiting == [5, 10]
+
+
+def test_gives_up_after_three_tries_and_says_how_much_arrived(tmp_path, config_text, table):
+    data = parquet_bytes(table)
+    cfg = cfg_for(tmp_path, config_text, data)
+    opener = serve_in_turn(b"abc", b"abc", b"abc", data)
+    with pytest.raises(ingest.IngestError, match="3 bytes"):
+        ingest.fetch(cfg, tmp_path / "d.pq", opener=opener)
+    assert len(opener.calls) == 3 and not list(tmp_path.glob("d.pq*"))
+
+
+def test_the_size_cap_is_never_retried(tmp_path, config_text, table):
+    data = parquet_bytes(table)
+    cfg = cfg_for(tmp_path, config_text, data, max_bytes=100)
+    opener = serve_in_turn(data, data)
+    with pytest.raises(ingest.IngestError, match="cap"):
+        ingest.fetch(cfg, tmp_path / "d.pq", opener=opener)
+    assert len(opener.calls) == 1
