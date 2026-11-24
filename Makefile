@@ -1,4 +1,4 @@
-.PHONY: install lint format test data train compare
+.PHONY: install lint format test data train compare threshold
 
 install:
 	uv sync
@@ -22,3 +22,6 @@ train:
 
 compare:
 	uv run python -m fraud_pipeline.compare
+
+threshold:
+	uv run python -m fraud_pipeline.threshold

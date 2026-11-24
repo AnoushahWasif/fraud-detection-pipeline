@@ -1,0 +1,90 @@
+{
+  "data_sha256": "b7efcb35a428bbe22347a05d2437d9177bab07ce61e51214a17bec584ad9496d",
+  "config_sha256": "2124ae913de4b3308d22a55c756aa612224a17035290b797e47e2b24f8fa375b",
+  "git": {
+    "commit": "4f56dba11263cb92cfb0bfdc22764cc0f347f5fc",
+    "dirty": false
+  },
+  "python": "3.12.13",
+  "sklearn": "1.9.1",
+  "pandas": "3.1.1",
+  "seed": 0,
+  "features": [
+    "Time",
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6",
+    "V7",
+    "V8",
+    "V9",
+    "V10",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18",
+    "V19",
+    "V20",
+    "V21",
+    "V22",
+    "V23",
+    "V24",
+    "V25",
+    "V26",
+    "V27",
+    "V28",
+    "Amount"
+  ],
+  "model": "boosting, class weights",
+  "threshold": 0.8125609434496658,
+  "validation": {
+    "pr_auc": 0.8467,
+    "recall_at_1_per_1000": 0.7321,
+    "at_threshold": {
+      "missed_eur_per_1000": 3.92,
+      "review_eur_per_1000": 5.27,
+      "alerts_per_1000": 1.05,
+      "frauds_caught": 43.0,
+      "frauds": 56.0,
+      "cost_per_1000": 9.18
+    },
+    "flag_nothing": {
+      "cost_per_1000": 196.57,
+      "missed_eur_per_1000": 196.57,
+      "review_eur_per_1000": 0.0,
+      "alerts_per_1000": 0.0,
+      "frauds_caught": 0.0,
+      "frauds": 56.0
+    },
+    "threshold_0.5": {
+      "cost_per_1000": 10.26,
+      "missed_eur_per_1000": 3.82,
+      "review_eur_per_1000": 6.44,
+      "alerts_per_1000": 1.29,
+      "frauds_caught": 46.0,
+      "frauds": 56.0
+    },
+    "missed_fraud_amounts": [
+      0.0,
+      0.01,
+      0.69,
+      0.76,
+      0.77,
+      1.0,
+      1.0,
+      2.22,
+      4.49,
+      8.0,
+      17.39,
+      22.47,
+      108.51
+    ]
+  },
+  "model_sha256": "7a2ce68df21044c29a66ed0abcaa2415f58577936d5952a04d94bbec31c749a0"
+}
